@@ -15,9 +15,21 @@ experimental:
 variables:
   catalog:
     description: Catalogo do ambiente. O valor vive só no target.
-  duracao_minima_interrupcao:
-    description: Minutos minimos para a interrupcao entrar em DEC e FEC. A bronze nao filtra.
+  duracao_minima_interrupcao_min:
+    description: Minutos minimos da RN-01. A bronze nao filtra.
     default: "3"
+  queda_uc_limiar:
+    description: Variacao da UC, negativa, a partir da qual o consumo caiu contra o proprio baseline.
+    default: "-0.25"
+  estabilidade_conjunto_limiar:
+    description: Modulo maximo da variacao do conjunto para a vizinhanca contar como estavel.
+    default: "0.10"
+  usar_ia:
+    description: true usa as funcoes ai_* na silver de texto. false usa regras, com as mesmas colunas.
+    default: "true"
+  warehouse_id:
+    description: SQL warehouse das tasks de governanca e da metric view.
+    default: "1d496deecacf10fd"
 
 targets:
   dev:
@@ -27,6 +39,7 @@ targets:
       host: https://dbc-55cedd82-08c5.cloud.databricks.com
     variables:
       catalog: grid_dev
+      usar_ia: "false"
   prod:
     mode: production
     workspace:

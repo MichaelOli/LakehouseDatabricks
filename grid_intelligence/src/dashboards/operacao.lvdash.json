@@ -14,6 +14,7 @@
         "  GROUP BY data\n",
         ")\n",
         "SELECT data,\n",
+        "       date_format(data, 'yyyy-MM') AS mes,\n",
         "       horas_uc, chamados, risco_saude, ucs_alta,\n",
         "       MAX_BY(horas_uc, data) OVER () AS horas_ultimo,\n",
         "       MAX_BY(chamados, data) OVER () AS chamados_ultimo,\n",
@@ -199,27 +200,31 @@
               "query": {
                 "datasetName": "ds_dia",
                 "fields": [
-                  {"name": "dia", "expression": "date_format(`data`, 'yyyy-MM-dd')"},
-                  {"name": "chamados", "expression": "`chamados`"},
-                  {"name": "horas_uc", "expression": "`horas_uc`"}
+                  {"name": "mes", "expression": "`mes`"},
+                  {"name": "sum(chamados)", "expression": "SUM(`chamados`)"},
+                  {"name": "sum(horas_uc)", "expression": "SUM(`horas_uc`)"}
                 ],
-                "disaggregated": true
+                "disaggregated": false
               }
             }],
             "spec": {
               "version": 3,
               "widgetType": "line",
               "encodings": {
-                "x": {"fieldName": "dia", "scale": {"type": "categorical"}, "displayName": "Dia"},
+                "x": {
+                  "fieldName": "mes",
+                  "displayName": "Mes",
+                  "scale": {"type": "categorical", "sort": {"by": "alphabetical"}}
+                },
                 "y": {
                   "scale": {"type": "quantitative"},
                   "fields": [
-                    {"fieldName": "chamados", "displayName": "Chamados"},
-                    {"fieldName": "horas_uc", "displayName": "Horas-UC"}
+                    {"fieldName": "sum(chamados)", "displayName": "Chamados"},
+                    {"fieldName": "sum(horas_uc)", "displayName": "Horas-UC"}
                   ]
                 }
               },
-              "frame": {"showTitle": true, "title": "Chamados e horas-UC no tempo"}
+              "frame": {"showTitle": true, "title": "Chamados e horas-UC por mes"}
             }
           }
         },

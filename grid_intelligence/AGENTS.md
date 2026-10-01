@@ -16,10 +16,18 @@ If this skill is not available (Databricks AI Tools are not installed), you can 
 databricks aitools install
 ```
 
-If the CLI is not installed, see: https://docs.databricks.com/dev-tools/cli/install
+If the CLI is not installed, see https://docs.databricks.com/dev-tools/cli/install
 
 ---
 
 ## Project Instructions
 
-<!-- Add your project-specific instructions, coding conventions, or notes here -->
+- Responda em português do Brasil.
+- Todo comando Databricks usa `--profile grid_intelligence`. Não escolha outro profile.
+- O catálogo vive só em `databricks.yml` (`${var.catalog}`). No pipeline, o nome chega por configuração. Em SQL de job, use `:catalogo` com `IDENTIFIER`.
+- O schema vive em `resources/grid_schemas.yml`. No bundle, use `${resources.schemas.<camada>.name}`.
+- Dev e prod se separam pelo catálogo, não por prefixo de schema. `experimental.skip_name_prefix_for_schema` fica ligado.
+- Não filtre nem corrija na bronze. Não recalcule DEC ou FEC fora da metric view. Não descreva UC com fraude, furto ou culpado.
+- Genie e o relatório executivo leem somente a gold.
+- Funções de IA entram como `ai_*`, sem nome de modelo.
+- `DROP CATALOG ... CASCADE` está documentado no README e só roda com confirmação explícita.

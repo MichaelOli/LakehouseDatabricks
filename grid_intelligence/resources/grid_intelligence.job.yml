@@ -39,3 +39,17 @@ resources:
             parameters:
               catalogo: ${var.catalog}
               schema_gold: ${resources.schemas.gold.name}
+        - task_key: relatorio_executivo
+          depends_on:
+            - task_key: metric_view_continuidade
+          environment_key: relatorio
+          notebook_task:
+            notebook_path: ../src/notebooks/relatorio_executivo.py
+            source: WORKSPACE
+            base_parameters:
+              catalogo: ${var.catalog}
+              usar_ia: ${var.usar_ia}
+      environments:
+        - environment_key: relatorio
+          spec:
+            environment_version: "2"

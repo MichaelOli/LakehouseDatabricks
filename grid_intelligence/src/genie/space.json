@@ -1,0 +1,115 @@
+{
+  "version": 2,
+  "config": {
+    "sample_questions": [
+      {
+        "id": "a1000000000000000000000000000001",
+        "question": ["O que aconteceu em Campinas nas ultimas 24 horas?"]
+      },
+      {
+        "id": "a1000000000000000000000000000002",
+        "question": ["Qual o DEC e o FEC de cada conjunto no ultimo mes?"]
+      },
+      {
+        "id": "a1000000000000000000000000000003",
+        "question": ["Quais bairros concentram UCs em prioridade alta de inspecao?"]
+      },
+      {
+        "id": "a1000000000000000000000000000004",
+        "question": ["Quais clientes ameacaram ouvidoria?"]
+      },
+      {
+        "id": "a1000000000000000000000000000005",
+        "question": ["Quantos chamados de risco a saude tivemos na ultima semana?"]
+      }
+    ]
+  },
+  "data_sources": {
+    "tables": [
+      {
+        "identifier": "${catalogo}.gold.painel_operacional_dia",
+        "description": ["Um dia de um conjunto: interrupcoes, horas-UC, chamados, risco a saude, mencoes a ouvidoria e a acao recomendada."]
+      },
+      {
+        "identifier": "${catalogo}.gold.prioridade_inspecao_uc",
+        "description": ["Uma linha por UC. Prioridade de inspecao, variacao da UC, variacao do conjunto e o motivo observado."]
+      },
+      {
+        "identifier": "${catalogo}.gold.saude_cliente",
+        "description": ["Uma linha por cliente, nao por UC. Risco de ouvidoria, volume de chamados e a ultima fala ja anonimizada."]
+      }
+    ],
+    "metric_views": [
+      {
+        "identifier": "${catalogo}.gold.continuidade_metricas",
+        "description": ["DEC, FEC e as demais medidas de continuidade. Sempre por MEASURE com GROUP BY ALL."]
+      }
+    ]
+  },
+  "instructions": {
+    "text_instructions": [
+      {
+        "id": "b2000000000000000000000000000001",
+        "content": [
+          "UC e a unidade consumidora, o ponto de ligacao. Cliente e a pessoa. Uma pessoa pode ter mais de uma UC. Nao some UC com cliente. ",
+          "painel_operacional_dia responde o que aconteceu num dia e num conjunto: interrupcoes, horas-UC, chamados, risco a saude, mencoes a ouvidoria e acao recomendada. ",
+          "continuidade_metricas responde DEC e FEC. Use MEASURE e GROUP BY ALL. Nao recalcule DEC nem FEC na mao. ",
+          "prioridade_inspecao_uc responde onde mandar a visita tecnica. saude_cliente responde o cliente, o risco de ouvidoria e a ultima fala. ",
+          "Para investigar uma queda de consumo, leia os dois eixos juntos: a variacao da UC e a variacao do conjunto. Se a vizinhanca caiu junto, a prioridade e baixa. Se a UC caiu e o conjunto ficou, a prioridade sobe. O sinal de violacao recente sozinho nao basta. ",
+          "Ultimas 24 horas, ontem e ultimo dia significam o maior data em painel_operacional_dia com movimento na regiao pedida, nao current_date(). O dataset termina no passado. ",
+          "Nunca descreva uma UC como fraude, furto, roubo ou irregularidade. Prioridade de inspecao e uma fila de visita. Queda de consumo tambem pode ser morador novo, imovel vazio, defeito no medidor ou erro de leitura."
+        ]
+      }
+    ],
+    "example_question_sqls": [
+      {
+        "id": "c3000000000000000000000000000001",
+        "question": ["O que aconteceu em Campinas nas ultimas 24 horas?"],
+        "sql": [
+          "WITH dia AS (\n",
+          "  SELECT MAX(data) AS data\n",
+          "  FROM ${catalogo}.gold.painel_operacional_dia\n",
+          "  WHERE nome_conjunto LIKE 'Campinas%'\n",
+          "    AND (qtd_interrupcoes > 0 OR qtd_chamados > 0 OR qtd_risco_saude > 0)\n",
+          ")\n",
+          "SELECT p.nome_conjunto, p.data, p.qtd_interrupcoes, p.uc_horas_interrompidas,\n",
+          "       p.qtd_chamados, p.qtd_risco_saude, p.qtd_mencoes_ouvidoria, p.acao_recomendada\n",
+          "FROM ${catalogo}.gold.painel_operacional_dia p\n",
+          "JOIN dia d ON p.data = d.data\n",
+          "WHERE p.nome_conjunto LIKE 'Campinas%'\n"
+        ]
+      },
+      {
+        "id": "c3000000000000000000000000000002",
+        "question": ["Qual o DEC e o FEC de cada conjunto no ultimo mes?"],
+        "sql": [
+          "SELECT `Conjunto`, `Mes`, MEASURE(`DEC`) AS dec, MEASURE(`FEC`) AS fec\n",
+          "FROM ${catalogo}.gold.continuidade_metricas\n",
+          "GROUP BY ALL\n",
+          "QUALIFY `Mes` = MAX(`Mes`) OVER ()\n"
+        ]
+      },
+      {
+        "id": "c3000000000000000000000000000003",
+        "question": ["Quais bairros concentram UCs em prioridade alta de inspecao?"],
+        "sql": [
+          "SELECT bairro, nome_conjunto, COUNT(*) AS ucs\n",
+          "FROM ${catalogo}.gold.prioridade_inspecao_uc\n",
+          "WHERE prioridade_inspecao = 'alta'\n",
+          "GROUP BY bairro, nome_conjunto\n",
+          "ORDER BY ucs DESC\n"
+        ]
+      },
+      {
+        "id": "c3000000000000000000000000000004",
+        "question": ["Quais clientes ameacaram ouvidoria?"],
+        "sql": [
+          "SELECT id_cliente, nome_conjunto, bairro, qtd_chamados, qtd_mencoes_ouvidoria, risco_ouvidoria\n",
+          "FROM ${catalogo}.gold.saude_cliente\n",
+          "WHERE risco_ouvidoria = 'alto'\n",
+          "ORDER BY qtd_mencoes_ouvidoria DESC\n"
+        ]
+      }
+    ]
+  }
+}

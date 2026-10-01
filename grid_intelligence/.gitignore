@@ -1,4 +1,7 @@
 .databricks/
+.claude/
+.vscode/
+.cursor/
 build/
 dist/
 __pycache__/

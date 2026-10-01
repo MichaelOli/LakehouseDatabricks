@@ -1,0 +1,55 @@
+resources:
+  jobs:
+    grid_intelligence_job:
+      name: grid_intelligence
+      tasks:
+        - task_key: liberar_leitura
+          sql_task:
+            file:
+              path: ../src/sql/liberar_leitura_bronze.sql
+              source: WORKSPACE
+            warehouse_id: ${var.warehouse_id}
+            parameters:
+              catalogo: ${var.catalog}
+              schema_bronze: ${resources.schemas.bronze.name}
+        - task_key: pipeline
+          depends_on:
+            - task_key: liberar_leitura
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.grid_intelligence.id}
+        - task_key: governanca_dado_pessoal
+          depends_on:
+            - task_key: pipeline
+          sql_task:
+            file:
+              path: ../src/sql/governanca_dado_pessoal.sql
+              source: WORKSPACE
+            warehouse_id: ${var.warehouse_id}
+            parameters:
+              catalogo: ${var.catalog}
+              schema_bronze: ${resources.schemas.bronze.name}
+        - task_key: metric_view_continuidade
+          depends_on:
+            - task_key: pipeline
+          sql_task:
+            file:
+              path: ../src/sql/metric_view_continuidade.sql
+              source: WORKSPACE
+            warehouse_id: ${var.warehouse_id}
+            parameters:
+              catalogo: ${var.catalog}
+              schema_gold: ${resources.schemas.gold.name}
+        - task_key: relatorio_executivo
+          depends_on:
+            - task_key: metric_view_continuidade
+          environment_key: relatorio
+          notebook_task:
+            notebook_path: ../src/notebooks/relatorio_executivo.py
+            source: WORKSPACE
+            base_parameters:
+              catalogo: ${var.catalog}
+              usar_ia: ${var.usar_ia}
+      environments:
+        - environment_key: relatorio
+          spec:
+            environment_version: "2"

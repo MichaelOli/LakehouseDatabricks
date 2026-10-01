@@ -1,0 +1,8 @@
+resources:
+  dashboards:
+    operacao:
+      display_name: Operacao da concessao
+      file_path: ../src/dashboards/operacao.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      dataset_catalog: ${var.catalog}
+      dataset_schema: ${resources.schemas.gold.name}
